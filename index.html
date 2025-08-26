@@ -1,0 +1,266 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Plan de estudio • Analizador de red trifásico</title>
+  <!-- Si prefieres un CSS separado, copia el bloque <style> en un archivo llamado "aprendizaje.css"
+       y reemplaza este bloque por: <link rel="stylesheet" href="aprendizaje.css"> -->
+  <style>
+    /* ======= aprendizaje.css (puedes copiar este bloque a un archivo externo) ======= */
+    :root{
+      --bg:#0e0f12; --panel:#151821; --muted:#8b91a1; --text:#e6e9ef; --ok:#1f9d55; --bad:#d64545; --accent:#4f46e5; --card:#10131b; --chip:#24283a;
+      --radius:14px; --shadow:0 10px 30px rgba(0,0,0,.35);
+    }
+    *{box-sizing:border-box}
+    html,body{height:100%}
+    body{margin:0; font-family:system-ui,-apple-system,Segoe UI,Roboto,Ubuntu,Cantarell,Helvetica,Arial,sans-serif; background:linear-gradient(145deg,#0b0c10,#131520 30%,#0b0c10); color:var(--text)}
+    a{color:var(--accent); text-decoration:none}
+    .wrap{max-width:1100px; margin:40px auto; padding:0 18px}
+    header{display:flex; gap:18px; align-items:center; justify-content:space-between; margin-bottom:18px}
+    .brand{display:flex; gap:14px; align-items:center}
+    .logo{width:44px; height:44px; border-radius:12px; background:radial-gradient(120% 120% at 30% 30%,#6ee7ff,#7c5cff 40%,#2f2a88 78%); box-shadow:var(--shadow)}
+    h1{font-size:1.6rem; margin:0}
+    .tag{font-size:.8rem; padding:6px 10px; border-radius:999px; background:var(--chip); color:#c6cbda; border:1px solid #363b56}
+
+    /* Top controls */
+    .controls{display:flex; flex-wrap:wrap; gap:12px; align-items:center; background:var(--panel); padding:12px 14px; border-radius:var(--radius); border:1px solid #25293d}
+    .controls .group{display:flex; gap:8px; align-items:center}
+    .controls label.switch{display:flex; align-items:center; gap:8px; background:#0f1220; color:#cbd1e3; padding:8px 10px; border-radius:10px; border:1px solid #262a42}
+    .controls input[type="checkbox"]{appearance:none; width:20px; height:20px; border-radius:6px; border:1px solid #3a3e5f; display:grid; place-items:center; background:#121528; cursor:pointer}
+    .controls input[type="checkbox"]::before{content:""; width:12px; height:12px; transform:scale(0); transition:.18s ease; background:var(--accent); border-radius:4px}
+    .controls input[type="checkbox"]:checked::before{transform:scale(1)}
+
+    /* Weeks grid */
+    .weeks{margin-top:18px; display:grid; grid-template-columns:repeat(12,1fr); gap:14px}
+    @media (max-width:1200px){.weeks{grid-template-columns:repeat(6,1fr)}}
+    @media (max-width:900px){.weeks{grid-template-columns:repeat(3,1fr)}}
+    @media (max-width:640px){.weeks{grid-template-columns:1fr}}
+
+    .week{grid-column:span 6; background:linear-gradient(180deg,rgba(255,255,255,.02),rgba(255,255,255,.01)); border:1px solid #2a2e47; border-radius:var(--radius); box-shadow:var(--shadow)}
+    .week header{padding:14px 16px; background:linear-gradient(180deg,#171a26 0,#11131b 100%); border-bottom:1px solid #2a2e47; border-top-left-radius:var(--radius); border-top-right-radius:var(--radius)}
+    .week h2{font-size:1rem; margin:0}
+    .week .meta{font-size:.8rem; color:#a7acc0}
+    .content{padding:12px 16px}
+
+    /* Task items */
+    .task{display:flex; gap:12px; align-items:flex-start; padding:10px 10px; border-radius:12px; border:1px solid #2b3047; background:var(--card); margin:8px 0}
+    .task input[type="checkbox"]{margin-top:3px; appearance:none; width:22px; height:22px; border-radius:6px; border:1px solid #3a3e5f; display:grid; place-items:center; background:#121528; cursor:pointer; flex:0 0 auto}
+    .task input[type="checkbox"]::before{content:""; width:14px; height:14px; transform:scale(0); transition:.18s ease; background:var(--ok); border-radius:4px}
+    .task input[type="checkbox"]:checked::before{transform:scale(1)}
+
+    .task label{display:block; cursor:pointer}
+    .task .title{font-weight:600}
+    .task .desc{display:block; font-size:.9rem; color:#a7acc0; margin-top:2px}
+
+    /* Learned / pending state (puro CSS usando :checked) */
+    .task input[type="checkbox"]:checked + label{opacity:.9}
+    .task input[type="checkbox"]:checked + label .title{text-decoration:line-through; color:#b6f3cd}
+    .task input[type="checkbox"] + label .badge{display:inline-flex; gap:6px; align-items:center; font-size:.75rem; padding:2px 8px; border-radius:999px; margin-left:8px; border:1px solid #3a3f59}
+    .task input[type="checkbox"] + label .badge::before{content:"•"}
+    .task input[type="checkbox"]:checked + label .badge{background:rgba(31,157,85,.15); color:#5dea9c; border-color:rgba(31,157,85,.35)}
+    .task input[type="checkbox"]:not(:checked) + label .badge{background:rgba(214,69,69,.12); color:#ffb3b3; border-color:rgba(214,69,69,.35)}
+
+    /* Mostrar solo pendientes (requiere :has, moderno) */
+    #soloPendientes:checked ~ .weeks .task:has(input:checked){display:none}
+
+    /* Print friendly */
+    @media print{
+      body{background:#fff; color:#000}
+      .controls{display:none}
+      .week{break-inside:avoid; box-shadow:none}
+      .task{border-color:#ccc}
+    }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <header>
+      <div class="brand">
+        <div class="logo" aria-hidden="true"></div>
+        <div>
+          <h1>Plan de estudio • Analizador de red trifásico</h1>
+          <div class="tag">Checklist interactivo — marca cada ítem cuando lo tengas <strong>aprendido</strong></div>
+        </div>
+      </div>
+      <div class="tag">12 semanas</div>
+    </header>
+
+    <section class="controls" id="toggle-pendientes">
+      <div class="group">
+        <label class="switch"><input type="checkbox" id="soloPendientes"> Mostrar solo pendientes</label>
+      </div>
+      <div class="group" style="color:#cbd1e3">Sugerencia: imprime cuando termines cada semana para tu evidencia.</div>
+    </section>
+
+    <section class="weeks">
+
+      <!-- Semana 1 -->
+      <article class="week">
+        <header>
+          <h2>Semana 1 • Fundamentos trifásicos y seguridad</h2>
+          <div class="meta">Objetivo: manejar RMS, P/Q/S/FP y normas básicas de seguridad (IEC 61010).</div>
+        </header>
+        <div class="content">
+          <div class="task"><input id="w1t1" type="checkbox"><label for="w1t1"><span class="title">RMS y potencias (P,Q,S,FP) <span class="badge">Pendiente/Aprendido</span></span><span class="desc">Deriva fórmulas y resuelve 3 problemas numéricos con valores típicos (230/400 V, 50/60 Hz).</span></label></div>
+          <div class="task"><input id="w1t2" type="checkbox"><label for="w1t2"><span class="title">Sistemas 3Φ: estrella/triángulo y secuencia de fases <span class="badge">Pendiente/Aprendido</span></span><span class="desc">Dibuja fasores L–L y L–N; calcula tensiones/ corrientes equivalentes.</span></label></div>
+          <div class="task"><input id="w1t3" type="checkbox"><label for="w1t3"><span class="title">Seguridad eléctrica IEC 61010 (conceptos) <span class="badge">Pendiente/Aprendido</span></span><span class="desc">Creepage/clearance, CAT II/III/IV, fusibles por fase y LOTO. Checklist de riesgos.</span></label></div>
+          <div class="task"><input id="w1t4" type="checkbox"><label for="w1t4"><span class="title">Ejercicio práctico con Fluke 1748 <span class="badge">Pendiente/Aprendido</span></span><span class="desc">Mide V/I/FP en tu instalación y guarda un log de 15 min como referencia base.</span></label></div>
+        </div>
+      </article>
+
+      <!-- Semana 2 -->
+      <article class="week">
+        <header>
+          <h2>Semana 2 • Sensores de tensión y corriente</h2>
+          <div class="meta">Objetivo: dimensionar divisores HV y burdens de CT con protección.</div>
+        </header>
+        <div class="content">
+          <div class="task"><input id="w2t1" type="checkbox"><label for="w2t1"><span class="title">Divisor HV 230→1 V y protección <span class="badge">Pendiente/Aprendido</span></span><span class="desc">Calcula Rt/Rb, potencia disipada, usa cadena de resistores 0,1 % y define MOV/TVS.</span></label></div>
+          <div class="task"><input id="w2t2" type="checkbox"><label for="w2t2"><span class="title">CT 100 A:50 mA + burden 20 Ω <span class="badge">Pendiente/Aprendido</span></span><span class="desc">Comprueba VA del CT, clase de exactitud y añade RC anti‑resonancia.</span></label></div>
+          <div class="task"><input id="w2t3" type="checkbox"><label for="w2t3"><span class="title">Aisladores analógicos/sigma‑delta (AMC13xx/14xx) <span class="badge">Pendiente/Aprendido</span></span><span class="desc">Selecciona parte y verifica clearances/creepage en el PCB.</span></label></div>
+          <div class="task"><input id="w2t4" type="checkbox"><label for="w2t4"><span class="title">Práctica con Fluke 190 <span class="badge">Pendiente/Aprendido</span></span><span class="desc">Observa forma de onda tras el front‑end y estima el ruido térmico.</span></label></div>
+        </div>
+      </article>
+
+      <!-- Semana 3 -->
+      <article class="week">
+        <header>
+          <h2>Semana 3 • ADC simultáneo y anti‑aliasing</h2>
+          <div class="meta">Objetivo: configurar ADS131M06/AD777x, Fs y filtros RC.</div>
+        </header>
+        <div class="content">
+          <div class="task"><input id="w3t1" type="checkbox"><label for="w3t1"><span class="title">Elección de Fs (12,8–32 kS/s) y fc (10–15 kHz) <span class="badge">Pendiente/Aprendido</span></span><span class="desc">Calcula C para R=1 kΩ y fc objetivo; valida margen vs armónicos hasta 3 kHz.</span></label></div>
+          <div class="task"><input id="w3t2" type="checkbox"><label for="w3t2"><span class="title">Configuración del ADC y lectura por DMA <span class="badge">Pendiente/Aprendido</span></span><span class="desc">Driver SPI + DMA que entrega bloques sincronizados (3V+3I).</span></label></div>
+          <div class="task"><input id="w3t3" type="checkbox"><label for="w3t3"><span class="title">Referencia/ENOB/ruido y sincronía de canales <span class="badge">Pendiente/Aprendido</span></span><span class="desc">Estima ENOB necesario para 0,2 % y mide jitter efectivo.</span></label></div>
+          <div class="task"><input id="w3t4" type="checkbox"><label for="w3t4"><span class="title">Ensayo con Omicron: barrido 45–65 Hz <span class="badge">Pendiente/Aprendido</span></span><span class="desc">Registra error de RMS vs frecuencia; guarda resultados.</span></label></div>
+        </div>
+      </article>
+
+      <!-- Semana 4 -->
+      <article class="week">
+        <header>
+          <h2>Semana 4 • DSP básico: RMS y potencia</h2>
+          <div class="meta">Objetivo: ventanas síncronas de 10 ciclos y P/Q/S/FP.</div>
+        </header>
+        <div class="content">
+          <div class="task"><input id="w4t1" type="checkbox"><label for="w4t1"><span class="title">RMS por fase y total trifásico <span class="badge">Pendiente/Aprendido</span></span><span class="desc">Implementa RMS en float/Q31 y valida contra Python.</span></label></div>
+          <div class="task"><input id="w4t2" type="checkbox"><label for="w4t2"><span class="title">Cálculo de P, Q (αβ) y S; PF <span class="badge">Pendiente/Aprendido</span></span><span class="desc">Compara con Fluke 1748 midiendo la misma carga 30 min.</span></label></div>
+          <div class="task"><input id="w4t3" type="checkbox"><label for="w4t3"><span class="title">Estimación de frecuencia/PLL discreto <span class="badge">Pendiente/Aprendido</span></span><span class="desc">Alinea ventanas exactamente a 10 ciclos aunque F varíe.</span></label></div>
+          <div class="task"><input id="w4t4" type="checkbox"><label for="w4t4"><span class="title">Registro de tendencia a SD <span class="badge">Pendiente/Aprendido</span></span><span class="desc">Guarda Vrms/Irms/P/Q/S/FP cada 200 ms sin fallos de tiempo real.</span></label></div>
+        </div>
+      </article>
+
+      <!-- Semana 5 -->
+      <article class="week">
+        <header>
+          <h2>Semana 5 • Armónicos, THD y VUF (IEC 61000‑4‑7)</h2>
+          <div class="meta">Objetivo: FFT con agrupación normada y secuencias simétricas.</div>
+        </header>
+        <div class="content">
+          <div class="task"><input id="w5t1" type="checkbox"><label for="w5t1"><span class="title">FFT/DFT con 10 ciclos y bins enteros <span class="badge">Pendiente/Aprendido</span></span><span class="desc">Implementa FFT (CMSIS/KissFFT) y valida con señales sintéticas.</span></label></div>
+          <div class="task"><input id="w5t2" type="checkbox"><label for="w5t2"><span class="title">Cálculo de THD y espectro 2º–50º <span class="badge">Pendiente/Aprendido</span></span><span class="desc">Inyecta H3/H5/H7 con Omicron y compara con Fluke 1748.</span></label></div>
+          <div class="task"><input id="w5t3" type="checkbox"><label for="w5t3"><span class="title">Desequilibrio de tensión (VUF) <span class="badge">Pendiente/Aprendido</span></span><span class="desc">Secuencias simétricas y umbral operativo (&lt;2 %).</span></label></div>
+          <div class="task"><input id="w5t4" type="checkbox"><label for="w5t4"><span class="title">Exportación de espectro y reporte <span class="badge">Pendiente/Aprendido</span></span><span class="desc">CSV/JSON con magnitud por orden y THD.</span></label></div>
+        </div>
+      </article>
+
+      <!-- Semana 6 -->
+      <article class="week">
+        <header>
+          <h2>Semana 6 • Eventos: sags, swells, interrupciones</h2>
+          <div class="meta">Objetivo: detección por 1/2 ciclo con histéresis y pre/post‑trigger.</div>
+        </header>
+        <div class="content">
+          <div class="task"><input id="w6t1" type="checkbox"><label for="w6t1"><span class="title">Umbrales e histéresis (0,9 pu / 1,1 pu) <span class="badge">Pendiente/Aprendido</span></span><span class="desc">Define lógica y evita rebotes en frontera.</span></label></div>
+          <div class="task"><input id="w6t2" type="checkbox"><label for="w6t2"><span class="title">Buffer circular y captura de evento <span class="badge">Pendiente/Aprendido</span></span><span class="desc">Guarda 10 ciclos pre y 100 post con timestamp.</span></label></div>
+          <div class="task"><input id="w6t3" type="checkbox"><label for="w6t3"><span class="title">Validación con Omicron <span class="badge">Pendiente/Aprendido</span></span><span class="desc">Simula sag 70 % 100 ms y swell 120 % 100 ms; compara tiempos.</span></label></div>
+          <div class="task"><input id="w6t4" type="checkbox"><label for="w6t4"><span class="title">Visor de eventos simple <span class="badge">Pendiente/Aprendido</span></span><span class="desc">Página local o CSV para auditoría.</span></label></div>
+        </div>
+      </article>
+
+      <!-- Semana 7 -->
+      <article class="week">
+        <header>
+          <h2>Semana 7 • Firmware robusto y tiempo</h2>
+          <div class="meta">Objetivo: RTOS (opcional), watchdog, RTC/NTP/PTP y manejo de energía.</div>
+        </header>
+        <div class="content">
+          <div class="task"><input id="w7t1" type="checkbox"><label for="w7t1"><span class="title">Arquitectura de tareas y prioridades <span class="badge">Pendiente/Aprendido</span></span><span class="desc">Procesado a 200 ms sin pérdidas; watchdog activo.</span></label></div>
+          <div class="task"><input id="w7t2" type="checkbox"><label for="w7t2"><span class="title">Timestamp confiable (RTC + NTP/PTP) <span class="badge">Pendiente/Aprendido</span></span><span class="desc">Marca alineación exacta de ventanas de 10 ciclos.</span></label></div>
+          <div class="task"><input id="w7t3" type="checkbox"><label for="w7t3"><span class="title">Manejo de SD y cortes de energía <span class="badge">Pendiente/Aprendido</span></span><span class="desc">FATFS, flush periódico y recuperación segura.</span></label></div>
+          <div class="task"><input id="w7t4" type="checkbox"><label for="w7t4"><span class="title">Pruebas de estrés de CPU <span class="badge">Pendiente/Aprendido</span></span><span class="desc">Carga al 80 % y verificación de latencias.</span></label></div>
+        </div>
+      </article>
+
+      <!-- Semana 8 -->
+      <article class="week">
+        <header>
+          <h2>Semana 8 • Comunicaciones</h2>
+          <div class="meta">Objetivo: Modbus RTU/TCP y/o MQTT; API REST básica.</div>
+        </header>
+        <div class="content">
+          <div class="task"><input id="w8t1" type="checkbox"><label for="w8t1"><span class="title">Mapa de registros Modbus <span class="badge">Pendiente/Aprendido</span></span><span class="desc">Exponer Vrms/Irms/P/Q/S/THD/VUF con documentación.</span></label></div>
+          <div class="task"><input id="w8t2" type="checkbox"><label for="w8t2"><span class="title">MQTT/REST y seguridad mínima <span class="badge">Pendiente/Aprendido</span></span><span class="desc">Publica métricas 1 s; agrega autenticación básica/TLS.</span></label></div>
+          <div class="task"><input id="w8t3" type="checkbox"><label for="w8t3"><span class="title">Herramientas de prueba <span class="badge">Pendiente/Aprendido</span></span><span class="desc">Script PC que lee y valida registros vs Fluke.</span></label></div>
+        </div>
+      </article>
+
+      <!-- Semana 9 -->
+      <article class="week">
+        <header>
+          <h2>Semana 9 • Calibración metrológica</h2>
+          <div class="meta">Objetivo: ganancia/offset/fase, linealidad y presupuesto de incertidumbre.</div>
+        </header>
+        <div class="content">
+          <div class="task"><input id="w9t1" type="checkbox"><label for="w9t1"><span class="title">Calibración V/I con Omicron (10 puntos) <span class="badge">Pendiente/Aprendido</span></span><span class="desc">Ajusta coeficientes; documenta resultados.</span></label></div>
+          <div class="task"><input id="w9t2" type="checkbox"><label for="w9t2"><span class="title">Fase y potencia <span class="badge">Pendiente/Aprendido</span></span><span class="desc">Barrido de ángulo −60°…+60° y verificación de PF.</span></label></div>
+          <div class="task"><input id="w9t3" type="checkbox"><label for="w9t3"><span class="title">Incertidumbre (GUM) <span class="badge">Pendiente/Aprendido</span></span><span class="desc">Budget con fuentes A/B y declaración final.</span></label></div>
+        </div>
+      </article>
+
+      <!-- Semana 10 -->
+      <article class="week">
+        <header>
+          <h2>Semana 10 • Validación con Fluke 1748</h2>
+          <div class="meta">Objetivo: paralelo 24 h y errores relativos dentro de meta.</div>
+        </header>
+        <div class="content">
+          <div class="task"><input id="w10t1" type="checkbox"><label for="w10t1"><span class="title">Prueba en paralelo 24 h <span class="badge">Pendiente/Aprendido</span></span><span class="desc">Compara V/I/P/Q/S/THD/VUF; calcula errores.</span></label></div>
+          <div class="task"><input id="w10t2" type="checkbox"><label for="w10t2"><span class="title">Informe de resultados <span class="badge">Pendiente/Aprendido</span></span><span class="desc">Gráficos de tendencia y tabla de error por métrica.</span></label></div>
+        </div>
+      </article>
+
+      <!-- Semana 11 -->
+      <article class="week">
+        <header>
+          <h2>Semana 11 • EMC/EMI y robustez</h2>
+          <div class="meta">Objetivo: mitigaciones y pruebas con cargas no lineales.</div>
+        </header>
+        <div class="content">
+          <div class="task"><input id="w11t1" type="checkbox"><label for="w11t1"><span class="title">Plan de EMC (filtros, tierras, ferritas) <span class="badge">Pendiente/Aprendido</span></span><span class="desc">Revisión de layout y cableado.</span></label></div>
+          <div class="task"><input id="w11t2" type="checkbox"><label for="w11t2"><span class="title">Ensayos con VFD/SMPS <span class="badge">Pendiente/Aprendido</span></span><span class="desc">Observa impacto en THD y eventos; ajusta filtros.</span></label></div>
+        </div>
+      </article>
+
+      <!-- Semana 12 -->
+      <article class="week">
+        <header>
+          <h2>Semana 12 • Documentación y entrega</h2>
+          <div class="meta">Objetivo: manual de usuario, API y procedimiento de calibración adjunto.</div>
+        </header>
+        <div class="content">
+          <div class="task"><input id="w12t1" type="checkbox"><label for="w12t1"><span class="title">Manual de operación y API <span class="badge">Pendiente/Aprendido</span></span><span class="desc">Incluye mapeo Modbus/MQTT y formatos de exportación.</span></label></div>
+          <div class="task"><input id="w12t2" type="checkbox"><label for="w12t2"><span class="title">Procedimiento de calibración + resultados <span class="badge">Pendiente/Aprendido</span></span><span class="desc">Adjunta tablas y certificados de referencia.</span></label></div>
+        </div>
+      </article>
+
+    </section>
+
+    <footer style="margin:30px 0; color:#a7acc0">
+      <p>Consejo: si tu navegador soporta <code>:has()</code>, el filtro “solo pendientes” funcionará sin JavaScript.</p>
+      <p>Este plan está pensado para avanzar de MVP a validación clase A con tu Fluke 1748/190 y Omicron.</p>
+    </footer>
+  </div>
+</body>
+</html>
